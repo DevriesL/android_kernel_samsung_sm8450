@@ -1,0 +1,5 @@
+/device/
+/kernel_platform/out/
+/out/
+
+exports.txt

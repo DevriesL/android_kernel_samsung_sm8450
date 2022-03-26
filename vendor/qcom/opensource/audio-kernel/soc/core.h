@@ -1,1 +1,1 @@
-/home/dpi/qb5_8815/workspace/P4_1716/android/kernel_platform/./msm-kernel/drivers/pinctrl/core.h
+/home/devries/Workspace/Kernel/android_kernel_samsung_sm8450/kernel_platform/./msm-kernel/drivers/pinctrl/core.h
