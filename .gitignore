@@ -3,3 +3,5 @@
 /out/
 
 exports.txt
+*.lz4
+*.img
