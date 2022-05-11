@@ -288,7 +288,7 @@ static u8 FRAME_INSERT_CMD[CASE_MAX][14] = {
 	{0x04, 0x00, 0x06, 0x00, 0x16, 0x00, 0xEE, 0x00, 0xEE, 0x00, 0x00, 0x01, 0x03, 0x00},	/* CASE6 */
 	{0x06, 0x00, 0x08, 0x00, 0x1C, 0x00, 0xEE, 0x00, 0xEE, 0x00, 0x00, 0x01, 0x03, 0x00},	/* CASE7 */
 	{0x08, 0x00, 0x0A, 0x00, 0x16, 0x00, 0xEE, 0x00, 0xEE, 0x00, 0x00, 0x02, 0x02, 0x00},	/* CASE8 */
-	{0x00, 0x00, 0x04, 0x00, 0x04, 0x00, 0x04, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00},	/* CASE9 */
+	{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},	/* CASE9 */
 };
 
 static int ss_get_frame_insert_cmd(struct samsung_display_driver_data *vdd,
@@ -296,34 +296,7 @@ static int ss_get_frame_insert_cmd(struct samsung_display_driver_data *vdd,
 {
 	u32 min_freq = DIV_ROUND_UP(base_rr, min_div);
 	u32 max_freq = DIV_ROUND_UP(base_rr, max_div);
-	int case_n = 0;
-
-	if (cur_hs) {
-		if (min_freq > 48) {
-			/* CASE1 : LFD_MIN=120HS~60HS */
-			case_n = CASE1;
-		} else if (max_freq == 30) {
-			case_n = CASE6;
-		} else if (max_freq == 24) {
-			case_n = CASE7;
-		} else if (max_freq <= 10) {
-			case_n = CASE8;
-		} else if (min_freq == 1) {
-			if (max_freq > 60)
-				case_n = CASE4;	/* CASE4 : 120HS ~ 1HS */
-			else if (max_freq > 30)
-				case_n = CASE5; /* CASE5 : 60HS ~ 1HS */
-		} else if (max_freq > 60) {
-			/* CASE2 : LFD_MIN=48HS~10HS, LFD_MAX=120HS~96HS */
-			case_n = CASE2;
-		} else {
-			/* CASE3 : LFD_MIN=48HS~10HS, LFD_MAX=60HS~48HS */
-			case_n = CASE3;
-		}
-	} else {
-		/* CASE5 : NS mode */
-		case_n = CASE9;
-	}
+	int case_n = CASE9;
 
 	memcpy(out_cmd, FRAME_INSERT_CMD[case_n], sizeof(FRAME_INSERT_CMD[0]) / sizeof(u8));
 
@@ -339,45 +312,8 @@ static int ss_get_frame_insert_cmd(struct samsung_display_driver_data *vdd,
 
 static void get_lfd_cmds(struct samsung_display_driver_data *vdd, int cur_hs, int fps, u8 *out_cmd)
 {
-	if (fps >= 96) {
-		out_cmd[0] = 0x00;
-		out_cmd[1] = 0x00;
-	} else if (fps >= 48) {
-		if (cur_hs) {
-			out_cmd[0] = 0x00;
-			out_cmd[1] = 0x02;
-		} else {
-			out_cmd[0] = 0x00;
-			out_cmd[1] = 0x00;
-		}
-	} else if (fps >= 32) {
-		out_cmd[0] = 0x00;
-		out_cmd[1] = 0x04;
-	} else if (fps == 30) {
-		if (cur_hs) {
-			out_cmd[0] = 0x00;
-			out_cmd[1] = 0x06;
-		} else {
-			out_cmd[0] = 0x00;
-			out_cmd[1] = 0x04;
-		}
-	} else if (fps == 30) {
-		out_cmd[0] = 0x00;
-		out_cmd[1] = 0x08;
-	} else if (fps == 24) {
-		out_cmd[0] = 0x00;
-		out_cmd[1] = 0x08;
-	} else if (fps == 10 || fps == 12) {
-		out_cmd[0] = 0x00;
-		out_cmd[1] = 0x16;
-	} else if (fps == 1) {
-		out_cmd[0] = 0x00;
-		out_cmd[1] = 0xEE;
-	} else {
-		LCD_ERR(vdd, "No lfd case..\n");
-		out_cmd[0] = 0x00;
-		out_cmd[1] = 0x00;
-	}
+	out_cmd[0] = 0x00;
+	out_cmd[1] = 0x00;
 
 	LCD_DEBUG(vdd, "hs(%d) fps (%d), 0x%02X 0x%02X\n", cur_hs, fps, out_cmd[0], out_cmd[1]);
 	return;
@@ -500,16 +436,16 @@ static struct dsi_panel_cmd_set *ss_vrr(struct samsung_display_driver_data *vdd,
 		else if (cur_rr == 60 || cur_rr == 48)
 			vrr_cmds->cmds[idx].ss_txbuf[1] = 0x16;
 		else
-			vrr_cmds->cmds[idx].ss_txbuf[1] = 0x17; // ON (120, 96, 30, 24, 10)
+			vrr_cmds->cmds[idx].ss_txbuf[1] = 0x16; // ON (120, 96, 30, 24, 10)
 	}
 
 	/* Freq Setting */
 	idx = ss_get_cmd_idx(vrr_cmds, 0x00, 0x60);
 	if (idx >= 0) {
 		if (vdd->panel_revision + 'A' < 'B')
-			vrr_cmds->cmds[idx].ss_txbuf[1] = cur_hs ? 0x00 : 0x10;
+			vrr_cmds->cmds[idx].ss_txbuf[1] = 0x00;
 		else
-			vrr_cmds->cmds[idx].ss_txbuf[1] = cur_hs ? 0x01 : 0x11;
+			vrr_cmds->cmds[idx].ss_txbuf[1] = 0x01;
 	}
 
 	if (ss_get_lfd_div(vdd, scope, &min_div, &max_div)) {
@@ -555,7 +491,7 @@ static struct dsi_panel_cmd_set *ss_vrr(struct samsung_display_driver_data *vdd,
 		if ((cur_rr == 60 && cur_hs) || cur_rr == 48 || cur_rr == 30 || cur_rr == 24 || cur_rr == 10)
 			vrr_cmds->cmds[idx].ss_txbuf[1] = 0x00;	// OFF
 		else
-			vrr_cmds->cmds[idx].ss_txbuf[1] = 0x10; // ON
+			vrr_cmds->cmds[idx].ss_txbuf[1] = 0x00; // ON
 
 		/* DBh 17th : 1st frmae insertion */
 		//idx = ss_get_cmd_idx(vrr_cmds, 0x10, 0xBD);
@@ -776,19 +712,9 @@ static struct dsi_panel_cmd_set * ss_brightness_gamma(struct samsung_display_dri
 	/* Manual AOR enable */
 	idx = ss_get_cmd_idx(pcmds, 0x19F, 0x98);
 	if (idx >= 0) {
-		if (cur_rr == 48 || cur_rr == 96) {
-			pcmds->cmds[idx].ss_txbuf[1] = 0x01; /* on */
-		} else {
-			pcmds->cmds[idx].ss_txbuf[1] = 0x00; /* off */
-		}
-
-		if (cur_rr == 48 || cur_rr == 96) {
-			pcmds->cmds[idx].ss_txbuf[2] = (aor_table_96[bl_lv] & 0xFF00) >> 8;
-			pcmds->cmds[idx].ss_txbuf[3] = aor_table_96[bl_lv] & 0xFF;
-		} else {
-			pcmds->cmds[idx].ss_txbuf[2] = (aor_table_120[bl_lv] & 0xFF00) >> 8;
-			pcmds->cmds[idx].ss_txbuf[3] = aor_table_120[bl_lv] & 0xFF;
-		}
+		pcmds->cmds[idx].ss_txbuf[1] = 0x01; /* on */
+		pcmds->cmds[idx].ss_txbuf[2] = 0x00;
+		pcmds->cmds[idx].ss_txbuf[3] = 0x2B;
 	}
 
 	/* GLUT Offset Enable */
